@@ -1,5 +1,7 @@
 #使用方法
 
+#HUST内如提示“不允许使用的客户端类型”，请改用sudo mentohust -v4.44 -w的方式运行一次。
+
 #安装mentohust：建议Ubuntu用户使用Deb包安装，Fedora用户使用RPM包安装
 
 #如果确定自己可以使用xrgsu认证成功，打开终端输入sudo mentohust运行即可
