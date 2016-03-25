@@ -11,7 +11,7 @@
 #include "config.h"
 #else
 static const char *VERSION = "0.3.1";
-static const char *PACKAGE_BUGREPORT = "http://code.google.com/p/mentohust/issues/list";
+static const char *PACKAGE_BUGREPORT = "https://github.com/godfather1103/mentohust/issues";
 #endif
 
 #include "myconfig.h"
