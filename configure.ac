@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT([mentohust], [0.3.1], [http://code.google.com/p/mentohust/issues/list])
+AC_INIT([mentohust], [0.3.1], [https://github.com/godfather1103/mentohust/issues])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/myconfig.h])
