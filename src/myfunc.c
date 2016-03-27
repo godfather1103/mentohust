@@ -6,14 +6,7 @@
 * 摘	要：认证相关算法及方法
 * 作	者：HustMoon@BYHH
 */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#else
-#define HAVE_ICONV_H
-#endif
-
 #include "myfunc.h"
-#include "i18n.h"
 #include "md5.h"
 #include "mycheck.h"
 #include <stdio.h>
@@ -30,10 +23,6 @@
 #include <ifaddrs.h>
 #endif
 #include <sys/poll.h>
-
-#ifdef HAVE_ICONV_H
-#include <iconv.h>
-#endif
 
 const u_char STANDARD_ADDR[] = {0x01,0x80,0xC2,0x00,0x00,0x03};
 const u_char RUIJIE_ADDR[] = {0x01,0xD0,0xF8,0x00,0x00,0x03};
@@ -65,34 +54,6 @@ static void checkSum(u_char *buf);	/* 锐捷算法，计算两个字节的检验
 static int setProperty(u_char type, const u_char *value, int length);	/* 设置指定属性 */
 static int readPacket(int type);	/* 读取数据 */
 static int Check(const u_char *md5Seed);	/* 校验算法 */
-
-char *gbk2utf(char *src, size_t srclen) {
-#ifdef  HAVE_ICONV_H
-	/* GBK一汉字俩字节，UTF-8一汉字3字节，二者ASCII字符均一字节
-		 所以这样申请是足够的了，要记得释放 */
-	size_t dstlen = srclen * 3 / 2 + 1;
-	size_t left = dstlen;
-	char *dst, *pdst;
-	int res;
-	iconv_t cd  = iconv_open("utf-8", "gbk");
-	if (cd == (iconv_t)-1)
-		return NULL;
-	dst = (char *)malloc(dstlen);
-	pdst = dst;
-	res = iconv(cd, &src, &srclen, &pdst, &left);
-	iconv_close(cd);
-	if (res == -1) {
-		free(dst);
-		return NULL;
-	}
-	dst[dstlen-left] = '\0';
-#else
-	char *dst = (char *)malloc(srclen+1);
-	memcpy(dst, src, srclen);
-	dst[srclen] = '\0';
-#endif
-	return dst;
-}
 
 char *formatIP(u_int32_t ip)
 {
@@ -137,18 +98,8 @@ static int checkFile() {
 
 fileError:
 	if (dataFile[strlen(dataFile)-1] != '/')
-		printf(_("!! 所选文件%s无效，改用内置数据认证。\n"), dataFile);
+		printf("!! 所选文件%s无效，改用内置数据认证。\n", dataFile);
 	return -1;
-}
-
-void printSuConfig(const char *SuConfig) {
-	char dbuf[2048], *text;
-	if (decodeConfig(SuConfig, (BYTE *)dbuf, sizeof(dbuf))) {
-		printf(_("!! 指定的SuConfig.dat文件无效。\n"));
-	} else if ((text=gbk2utf(dbuf, strlen(dbuf))) != NULL) {
-		printf("%s\n", text);
-		free(text);
-	}
 }
 
 static int getVersion() {
@@ -188,7 +139,7 @@ static int getAddress()
 	int sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0)
 	{
-		printf(_("!! 创建套接字失败!\n"));
+		printf("!! 创建套接字失败!\n");
 		return -1;
 	}
 	strcpy(ifr.ifr_name, nic);
@@ -223,7 +174,7 @@ static int getAddress()
 #ifndef NO_ARP
 	gateMAC[0] = 0xFE;
 	if (ioctl(sock, SIOCGIFADDR, &ifr) < 0)
-		printf(_("!! 在网卡%s上获取IP失败!\n"), nic);
+		printf("!! 在网卡%s上获取IP失败!\n", nic);
 	else {
 		rip = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
 		if (gateway!=0 && (startMode%3!=2 || ((u_char *)&gateway)[3]!=0x02))
@@ -234,7 +185,7 @@ static int getAddress()
 #else
 	if (dhcpMode!=0 || ip==-1) {
 		if (ioctl(sock, SIOCGIFADDR, &ifr) < 0)
-			printf(_("!! 在网卡%s上获取IP失败!\n"), nic);
+			printf("!! 在网卡%s上获取IP失败!\n", nic);
 		else
 			ip = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
 	}
@@ -242,20 +193,20 @@ static int getAddress()
 
 	if (dhcpMode!=0 || mask==-1) {
 		if (ioctl(sock, SIOCGIFNETMASK, &ifr) < 0)
-			printf(_("!! 在网卡%s上获取子网掩码失败!\n"), nic);
+			printf("!! 在网卡%s上获取子网掩码失败!\n", nic);
 		else
 			mask = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
 	}
 	close(sock);
 
-	printf(_("** 本机MAC:\t%s\n"), formatHex(localMAC, 6));
-	printf(_("** 使用IP:\t%s\n"), formatIP(ip));
-	printf(_("** 子网掩码:\t%s\n"), formatIP(mask));
+	printf("** 本机MAC:\t%s\n", formatHex(localMAC, 6));
+	printf("** 使用IP:\t%s\n", formatIP(ip));
+	printf("** 子网掩码:\t%s\n", formatIP(mask));
 	return 0;
 
 getMACError:
 	close(sock);
-	printf(_("!! 在网卡%s上获取MAC失败!\n"), nic);
+	printf("!! 在网卡%s上获取MAC失败!\n", nic);
 	return -1;
 }
 
@@ -378,7 +329,7 @@ static int readPacket(int type)
 	return 0;
 
 fileError:
-	printf(_("!! 所选文件%s无效，改用内置数据认证。\n"), dataFile);
+	printf("!! 所选文件%s无效，改用内置数据认证。\n", dataFile);
 	bufType -= 2;
 	if (bufType==1 && fillSize<0x1d7) {
 		free(fillBuf);
@@ -464,15 +415,15 @@ static int Check(const u_char *md5Seed)	/* 客户端校验 */
 {
 	char final_str[129];
 	int value;
-	printf(_("** 客户端版本:\t%d.%d\n"), fillBuf[0x3B], fillBuf[0x3C]);
-	printf(_("** MD5种子:\t%s\n"), formatHex(md5Seed, 16));
+	printf("** 客户端版本:\t%d.%d\n", fillBuf[0x3B], fillBuf[0x3C]);
+	printf("** MD5种子:\t%s\n", formatHex(md5Seed, 16));
 	value = check_init(dataFile);
 	if (value == -1) {
-		printf(_("!! 缺少8021x.exe信息，客户端校验无法继续！\n"));
+		printf("!! 缺少8021x.exe信息，客户端校验无法继续！\n");
 		return 1;
 	}
 	V2_check(md5Seed, final_str);
-	printf(_("** V2校验值:\t%s\n"), final_str);
+	printf("** V2校验值:\t%s\n", final_str);
 	setProperty(0x17, (u_char *)final_str, 32);
 	check_free();
 	return 0;
@@ -494,10 +445,11 @@ void fillEchoPacket(u_char *echoBuf)
 void getEchoKey(const u_char *capBuf)
 {
 	int i, offset = 0x1c+capBuf[0x1b]+0x69+24;	/* 通过比较了大量抓包，通用的提取点就是这样的 */
-	u_char *base = (u_char *)(&echoKey);
+	u_char *base;
+	echoKey = ntohl(*(u_int32_t *)(capBuf+offset));
+	base = (u_char *)(&echoKey);
 	for (i=0; i<4; i++)
-		base[i] = encode(capBuf[offset+i]);
-	echoKey = ntohl(echoKey);
+		base[i] = encode(base[i]);
 }
 
 u_char *checkPass(u_char id, const u_char *md5Seed, int seedLen)
@@ -562,7 +514,7 @@ int isOnline()
 	return -1;
 
 pingError:
-	perror(_("!! Ping主机出错，关闭该功能"));
+	perror("!! Ping主机出错，关闭该功能");
 	if (sock != -1)
 		close(sock);
 	pingHost = 0;
